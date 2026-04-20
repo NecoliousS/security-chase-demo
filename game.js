@@ -1,8 +1,3 @@
-// ==================== TRAIN YARD CHASE — NORM THE SECURITY GUARD ====================
-// Camera is behind Norm, Norm runs INTO the screen
-// Obstacles are STATIONARY in the world — Norm runs toward them
-// Sable chases Norm when he messes up
-
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
@@ -14,20 +9,18 @@ function resize() {
 resize();
 window.addEventListener('resize', resize);
 
-// ==================== GAME STATES ====================
 const STATE = { MENU: 0, PLAYING: 1, PAUSED: 2, GAMEOVER: 3 };
 let gameState = STATE.MENU;
 
-// ==================== PERSPECTIVE ====================
 let LANE_WIDTH = 0;
 let ROAD_WIDTH = 0;
 let HORIZON_Y = 0;
-const VIEW_DISTANCE = 140; // meters ahead visible
+const VIEW_DISTANCE = 120;
 
 function calcPerspective() {
     LANE_WIDTH = canvas.width * 0.22;
     ROAD_WIDTH = LANE_WIDTH * 3.8;
-    HORIZON_Y = canvas.height * 0.25;
+    HORIZON_Y = canvas.height * 0.28;
 }
 calcPerspective();
 window.addEventListener('resize', calcPerspective);
@@ -46,15 +39,12 @@ function getScale(z) {
     return 0.15 + 0.85 * z;
 }
 
-// Convert world distance ahead to screen Z
 function worldToScreenZ(ahead) {
-    // ahead: meters ahead of player. 0 = at player, VIEW_DISTANCE = horizon
     if (ahead > VIEW_DISTANCE) return -1;
     if (ahead < -30) return 2;
     return 0.72 * (1 - ahead / VIEW_DISTANCE);
 }
 
-// ==================== RUNNERS ====================
 const ALL_RUNNERS = [
     { name: "Tag", faction: "vandal", diff: 1, hoodie: "#9ca3af", pants: "#4b5563", accent: "#6b7280", ability: "none" },
     { name: "Roller", faction: "vandal", diff: 2, hoodie: "#3b82f6", pants: "#1e3a8a", accent: "#fbbf24", ability: "paint" },
@@ -74,55 +64,34 @@ function pickRandomRunner() {
     return pool[Math.floor(Math.random() * pool.length)];
 }
 
-// ==================== PLAYER (Norm — Security Guard) ====================
 const player = {
-    lane: 0,
-    targetLane: 0,
-    worldZ: 0,      // Total distance run
-    jumping: false,
-    jumpY: 0,
-    jumpVel: 0,
-    sliding: false,
-    slideTimer: 0,
-    stunTimer: 0,
-    animFrame: 0
+    lane: 0, targetLane: 0, worldZ: 0,
+    jumping: false, jumpY: 0, jumpVel: 0,
+    sliding: false, slideTimer: 0, stunTimer: 0, animFrame: 0
 };
 
-// ==================== RUNNER AHEAD ====================
 const runner = {
-    lane: 0,
-    targetLane: 0,
-    worldZ: 0,      // Absolute world position
-    caught: false,
-    escaped: false,
-    abilityTimer: 0,
-    lastAbility: 0,
-    animFrame: 0,
-    data: null,
-    name: ""
+    lane: 0, targetLane: 0, worldZ: 0,
+    caught: false, escaped: false,
+    abilityTimer: 0, lastAbility: 0, animFrame: 0,
+    data: null, name: ""
 };
 
-// ==================== SABLE (Security Doberman) ====================
 const sable = {
-    active: false,
-    lane: 0,
-    state: "hidden",
-    approachTimer: 0,
-    animFrame: 0
+    active: false, lane: 0, state: "hidden",
+    approachTimer: 0, animFrame: 0
 };
 
-// ==================== WORLD ====================
 let obstacles = [];
-let sleepers = [];      // Train track wooden sleepers
+let sleepers = [];
 let particles = [];
 let score = 0;
 let distance = 0;
-let catchDistance = 0;  // Meters behind runner
+let catchDistance = 0;
 let gameSpeed = 0;
 let baseSpeed = 14;
 let runTime = 0;
 
-// ==================== INPUT ====================
 const keys = {};
 let touchStartX = 0;
 let touchStartY = 0;
@@ -130,7 +99,6 @@ let touchStartY = 0;
 document.addEventListener('keydown', (e) => {
     const k = e.key.toLowerCase();
     keys[k] = true;
-    
     if (gameState === STATE.PLAYING) {
         if (e.key === 'ArrowLeft' || k === 'a') moveLane(-1);
         if (e.key === 'ArrowRight' || k === 'd') moveLane(1);
@@ -154,7 +122,6 @@ canvas.addEventListener('touchend', (e) => {
     e.preventDefault();
     const dx = e.changedTouches[0].clientX - touchStartX;
     const dy = e.changedTouches[0].clientY - touchStartY;
-    
     if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 30) {
         if (gameState === STATE.PLAYING) moveLane(dx > 0 ? 1 : -1);
     } else if (Math.abs(dy) > 50) {
@@ -165,7 +132,6 @@ canvas.addEventListener('touchend', (e) => {
     }
 }, {passive: false});
 
-// ==================== UI BUTTONS ====================
 document.getElementById('playBtn').addEventListener('click', (e) => {
     e.preventDefault();
     startGame();
@@ -206,7 +172,6 @@ document.getElementById('endMenuBtn').addEventListener('click', (e) => {
     returnToMenu();
 });
 
-// Mobile
 document.getElementById('btnLeft').addEventListener('touchstart', (e) => { e.preventDefault(); moveLane(-1); });
 document.getElementById('btnRight').addEventListener('touchstart', (e) => { e.preventDefault(); moveLane(1); });
 document.getElementById('btnJump').addEventListener('touchstart', (e) => { e.preventDefault(); startJump(); });
@@ -260,10 +225,8 @@ function returnToMenu() {
     document.getElementById('catchPopup').style.display = 'none';
 }
 
-// ==================== GAME INIT ====================
 function startGame() {
     currentRunner = pickRandomRunner();
-    
     score = 0;
     distance = 0;
     runTime = 0;
@@ -283,10 +246,9 @@ function startGame() {
     player.stunTimer = 0;
     player.animFrame = 0;
     
-    // Runner starts ahead
     runner.lane = Math.floor(Math.random() * 3) - 1;
     runner.targetLane = runner.lane;
-    runner.worldZ = 60; // 60 meters ahead
+    runner.worldZ = 60;
     runner.caught = false;
     runner.escaped = false;
     runner.abilityTimer = 0;
@@ -303,7 +265,6 @@ function startGame() {
     sable.approachTimer = 0;
     sable.animFrame = 0;
     
-    // Init sleepers every 4 meters
     for (let d = 0; d < VIEW_DISTANCE + 20; d += 4) {
         sleepers.push({ distance: d });
     }
@@ -319,11 +280,8 @@ function startGame() {
     requestAnimationFrame(gameLoop);
 }
 
-// ==================== SPAWN (Stationary Obstacles) ====================
 function spawnObstacle() {
     const lane = Math.floor(Math.random() * 3) - 1;
-    
-    // Check not too close to existing in same lane
     const tooClose = obstacles.some(o => {
         if (o.lane !== lane) return false;
         const ahead = o.distance - player.worldZ;
@@ -336,24 +294,13 @@ function spawnObstacle() {
     if (roll > 0.5) type = 'barrier';
     if (roll > 0.82) type = 'traincar';
     
-    // Place ahead of player at fixed world distance
     const spawnDist = player.worldZ + VIEW_DISTANCE + Math.random() * 20;
-    
-    obstacles.push({
-        lane: lane,
-        distance: spawnDist,
-        type: type,
-        hit: false,
-        pixelated: false
-    });
+    obstacles.push({ lane: lane, distance: spawnDist, type: type, hit: false, pixelated: false });
 }
 
-// ==================== HIT HANDLING ====================
 function hitObstacle(o) {
     o.hit = true;
     player.stunTimer = 600;
-    
-    // Sparks
     const px = getLaneX(player.lane, 0.72);
     const py = getScreenY(0.72);
     for (let i = 0; i < 10; i++) {
@@ -380,25 +327,21 @@ function hitObstacle(o) {
     }
 }
 
-// ==================== UPDATE ====================
 let lastTime = 0;
 let spawnTimer = 0;
 
 function update(dt) {
     if (gameState !== STATE.PLAYING) return;
-    
     const secs = dt / 1000;
     runTime += dt;
     
     gameSpeed = baseSpeed + Math.min(6, runTime / 6000);
-    player.worldZ += gameSpeed * secs * 8; // Run forward
+    player.worldZ += gameSpeed * secs * 8;
     distance = Math.floor(player.worldZ);
     score += Math.floor(gameSpeed * secs);
     
-    // Smooth lane
     player.lane += (player.targetLane - player.lane) * 0.14;
     
-    // Player physics
     if (player.jumping) {
         player.jumpY += player.jumpVel;
         player.jumpVel -= 0.95;
@@ -413,17 +356,13 @@ function update(dt) {
     }
     if (player.stunTimer > 0) player.stunTimer -= dt;
     
-    // Runner AI — runs ahead, occasionally switches lanes
     runner.lane += (runner.targetLane - runner.lane) * 0.07;
     if (Math.random() < 0.005) {
         const newLane = Math.floor(Math.random() * 3) - 1;
         if (Math.abs(newLane - runner.lane) <= 1) runner.targetLane = newLane;
     }
     
-    // Runner moves forward slightly slower than Norm (Norm catches up)
     runner.worldZ += gameSpeed * secs * 6.5;
-    
-    // Catch mechanic
     catchDistance = runner.worldZ - player.worldZ;
     
     if (catchDistance <= 5 && !runner.caught && !runner.escaped) {
@@ -438,17 +377,14 @@ function update(dt) {
         endGame(false, 'escape');
     }
     
-    // Runner abilities when Norm gets close
     if (catchDistance < 50 && runTime - runner.lastAbility > 3500 && !runner.caught) {
         runner.lastAbility = runTime;
         useRunnerAbility();
     }
     
-    // SABLE
     if (sable.active) {
         sable.lane += (player.lane - sable.lane) * 0.12;
         sable.animFrame += dt * 0.012;
-        
         if (sable.state === 'approaching') {
             sable.approachTimer -= dt;
             if (sable.approachTimer <= 0) {
@@ -461,43 +397,31 @@ function update(dt) {
         }
     }
     
-    // Spawn obstacles
     spawnTimer -= dt;
     if (spawnTimer <= 0) {
         spawnObstacle();
         spawnTimer = 800 + Math.random() * 1000;
     }
     
-    // Update obstacles (stationary — only check collision and culling)
     obstacles = obstacles.filter(o => {
         const ahead = o.distance - player.worldZ;
-        
-        // Collision check when very close to player
         if (!o.hit && ahead < 8 && ahead > -3) {
             const laneDiff = Math.abs(o.lane - player.lane);
             if (laneDiff < 0.5) {
-                if (o.type === 'crate' && !player.jumping) {
-                    hitObstacle(o);
-                } else if (o.type === 'barrier' && !player.sliding) {
-                    hitObstacle(o);
-                } else if (o.type === 'traincar') {
-                    hitObstacle(o); // Must dodge — can't jump or slide
-                }
+                if (o.type === 'crate' && !player.jumping) hitObstacle(o);
+                else if (o.type === 'barrier' && !player.sliding) hitObstacle(o);
+                else if (o.type === 'traincar') hitObstacle(o);
             }
         }
-        
-        // Keep if within view (ahead or slightly behind)
         return ahead > -40 && ahead < VIEW_DISTANCE + 20;
     });
     
-    // Update sleepers (infinite scroll)
     sleepers = sleepers.filter(s => (s.distance - player.worldZ) > -20);
     while (sleepers.length < 50) {
         const lastDist = sleepers.length > 0 ? sleepers[sleepers.length - 1].distance : player.worldZ;
         sleepers.push({ distance: lastDist + 4 });
     }
     
-    // Particles
     particles = particles.filter(p => {
         p.life -= dt;
         p.x += p.vx;
@@ -509,7 +433,6 @@ function update(dt) {
     player.animFrame += dt * 0.014;
     runner.animFrame += dt * 0.016;
     
-    // UI
     const distFill = Math.max(0, Math.min(100, (1 - catchDistance / 100) * 100));
     document.getElementById('distanceFill').style.width = distFill + '%';
     document.getElementById('distanceText').textContent = Math.max(0, Math.floor(catchDistance)) + 'm to catch';
@@ -615,8 +538,7 @@ function createFlash() {
             x: canvas.width/2 + (Math.random()-0.5)*canvas.width,
             y: canvas.height/2 + (Math.random()-0.5)*canvas.height,
             life: 300,
-            vx: 0,
-            vy: 0,
+            vx: 0, vy: 0,
             type: 'flash',
             color: '#ffffff'
         });
@@ -656,14 +578,12 @@ function createZipEffect() {
 
 // ==================== RENDER ====================
 function draw() {
-    // Clear
     ctx.fillStyle = '#0d1b2a';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
     drawBackground();
     drawTracks();
     
-    // Draw runner ahead
     if (!runner.caught && catchDistance < VIEW_DISTANCE) {
         const rZ = worldToScreenZ(catchDistance);
         if (rZ > 0 && rZ < 1.5) {
@@ -671,7 +591,6 @@ function draw() {
         }
     }
     
-    // Draw obstacles (sorted by Z for proper depth)
     const visibleObs = obstacles.map(o => {
         const ahead = o.distance - player.worldZ;
         return { ...o, ahead, z: worldToScreenZ(ahead) };
@@ -680,14 +599,11 @@ function draw() {
     visibleObs.sort((a, b) => a.z - b.z);
     visibleObs.forEach(o => drawObstacle(o));
     
-    // Draw particles
     particles.forEach(p => drawParticle(p));
     
-    // Draw player (Norm)
     const pZ = 0.72;
     drawNorm(getLaneX(player.lane, pZ), getScreenY(pZ) - player.jumpY, getScale(pZ), player.animFrame, player.sliding);
     
-    // Draw Sable
     if (sable.active) {
         let sZ;
         if (sable.state === 'approaching') {
@@ -701,7 +617,6 @@ function draw() {
 }
 
 function drawBackground() {
-    // Industrial sky
     const skyGrad = ctx.createLinearGradient(0, 0, 0, HORIZON_Y);
     skyGrad.addColorStop(0, '#0d1b2a');
     skyGrad.addColorStop(0.6, '#1b263b');
@@ -709,7 +624,6 @@ function drawBackground() {
     ctx.fillStyle = skyGrad;
     ctx.fillRect(0, 0, canvas.width, HORIZON_Y);
     
-    // Distant industrial silhouette
     ctx.fillStyle = '#0d1b2a';
     for (let i = 0; i < 15; i++) {
         const h = 20 + Math.sin(i * 1.5) * 15 + Math.cos(i * 2.3) * 10;
@@ -718,7 +632,6 @@ function drawBackground() {
         ctx.fillRect(x, HORIZON_Y - h, w, h);
     }
     
-    // Fence posts in distance
     ctx.strokeStyle = '#1b263b';
     ctx.lineWidth = 2;
     for (let i = 0; i < 20; i++) {
@@ -734,7 +647,6 @@ function drawTracks() {
     const center = canvas.width / 2;
     const trackSpread = ROAD_WIDTH / 2;
     
-    // Gravel bed
     ctx.fillStyle = '#2d2d2d';
     ctx.beginPath();
     ctx.moveTo(center - trackSpread * 0.3, HORIZON_Y);
@@ -743,7 +655,6 @@ function drawTracks() {
     ctx.lineTo(center - trackSpread * 1.2, canvas.height);
     ctx.fill();
     
-    // Gravel texture (dots)
     ctx.fillStyle = '#3d3d3d';
     for (let i = 0; i < 80; i++) {
         const gx = center + (Math.random() - 0.5) * trackSpread * 2.2;
@@ -751,7 +662,6 @@ function drawTracks() {
         ctx.fillRect(gx, gy, 2, 2);
     }
     
-    // Rails
     ctx.strokeStyle = '#8899a6';
     ctx.lineWidth = 4;
     const leftRailX = getLaneX(-1.6, 1);
@@ -767,7 +677,6 @@ function drawTracks() {
     ctx.lineTo(rightRailX, canvas.height);
     ctx.stroke();
     
-    // Rail shine
     ctx.strokeStyle = '#aabbcc';
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -779,25 +688,19 @@ function drawTracks() {
     ctx.lineTo(rightRailX, canvas.height);
     ctx.stroke();
     
-    // Wooden sleepers
     sleepers.forEach(s => {
         const ahead = s.distance - player.worldZ;
         const z = worldToScreenZ(ahead);
         if (z < 0 || z > 1.2) return;
-        
         const y = getScreenY(z);
         const scale = getScale(z);
         const width = ROAD_WIDTH * scale * 1.3;
-        
         ctx.fillStyle = '#3e2723';
         ctx.fillRect(center - width/2, y - 3 * scale, width, 6 * scale);
-        
-        // Sleeper detail
         ctx.fillStyle = '#5d4037';
         ctx.fillRect(center - width/2 + 5*scale, y - 2*scale, width - 10*scale, 4*scale);
     });
     
-    // Lane markers (subtle)
     for (let i = -1; i <= 1; i++) {
         ctx.strokeStyle = 'rgba(255,255,255,0.06)';
         ctx.lineWidth = 2;
@@ -812,10 +715,8 @@ function drawNorm(x, y, scale, frame, sliding) {
     ctx.save();
     ctx.translate(x, y);
     ctx.scale(scale, scale);
-    
     if (sliding) ctx.scale(1.3, 0.6);
     
-    // Shadow
     ctx.fillStyle = 'rgba(0,0,0,0.4)';
     ctx.beginPath();
     ctx.ellipse(0, 45, 30, 10, 0, 0, Math.PI * 2);
@@ -824,25 +725,20 @@ function drawNorm(x, y, scale, frame, sliding) {
     const legSwing = sliding ? 5 : Math.sin(frame) * 15;
     const armSwing = sliding ? 3 : Math.cos(frame) * 12;
     
-    // Legs (dark blue pants)
     ctx.fillStyle = '#1e3a8a';
     ctx.fillRect(-14, 10, 12, 30 + legSwing);
     ctx.fillRect(2, 10, 12, 30 - legSwing);
     
-    // Shoes
     ctx.fillStyle = '#111';
     ctx.fillRect(-16, 38 + legSwing, 16, 8);
     ctx.fillRect(2, 38 - legSwing, 16, 8);
     
-    // Torso (security shirt — light blue)
     ctx.fillStyle = '#60a5fa';
     ctx.fillRect(-16, -20, 32, 35);
     
-    // Belt
     ctx.fillStyle = '#1f2937';
     ctx.fillRect(-16, 12, 32, 6);
     
-    // Badge
     ctx.fillStyle = '#ffd700';
     ctx.beginPath();
     ctx.arc(-6, -5, 4, 0, Math.PI * 2);
@@ -851,12 +747,10 @@ function drawNorm(x, y, scale, frame, sliding) {
     ctx.font = 'bold 5px Arial';
     ctx.fillText('SEC', -8, -3);
     
-    // Arms
     ctx.fillStyle = '#60a5fa';
     ctx.fillRect(-28, -15, 10, 28 + armSwing);
     ctx.fillRect(18, -15, 10, 28 - armSwing);
     
-    // Hands
     ctx.fillStyle = '#fca5a5';
     ctx.beginPath();
     ctx.arc(-23, 15 + armSwing, 5, 0, Math.PI * 2);
@@ -865,23 +759,19 @@ function drawNorm(x, y, scale, frame, sliding) {
     ctx.arc(23, 15 - armSwing, 5, 0, Math.PI * 2);
     ctx.fill();
     
-    // Head
     ctx.fillStyle = '#fca5a5';
     ctx.beginPath();
     ctx.arc(0, -32, 14, 0, Math.PI * 2);
     ctx.fill();
     
-    // Cap (security cap)
     ctx.fillStyle = '#1e40af';
     ctx.beginPath();
     ctx.arc(0, -36, 14, Math.PI, 0);
     ctx.fill();
     ctx.fillRect(-16, -36, 32, 5);
-    // Cap brim
     ctx.fillStyle = '#1e3a8a';
     ctx.fillRect(-10, -34, 20, 4);
     
-    // Face
     ctx.fillStyle = '#1f2937';
     ctx.beginPath();
     ctx.arc(-4, -32, 2, 0, Math.PI * 2);
@@ -890,7 +780,6 @@ function drawNorm(x, y, scale, frame, sliding) {
     ctx.arc(4, -32, 2, 0, Math.PI * 2);
     ctx.fill();
     
-    // Flashlight on belt
     ctx.fillStyle = '#374151';
     ctx.fillRect(10, 8, 6, 10);
     ctx.fillStyle = '#fef3c7';
@@ -906,11 +795,248 @@ function drawRunner(x, y, scale, frame, data) {
     ctx.translate(x, y);
     ctx.scale(scale * 0.85, scale * 0.85);
     
-    // Shadow
     ctx.fillStyle = 'rgba(0,0,0,0.3)';
     ctx.beginPath();
     ctx.ellipse(0, 45, 25, 8, 0, 0, Math.PI * 2);
     ctx.fill();
     
     const legSwing = Math.sin(frame) * 18;
-    const armSwing = Math
+    const armSwing = Math.cos(frame) * 14;
+    
+    ctx.fillStyle = data.pants;
+    ctx.fillRect(-10, 10, 8, 32 + legSwing);
+    ctx.fillRect(2, 10, 8, 32 - legSwing);
+    
+    ctx.fillStyle = '#111';
+    ctx.fillRect(-12, 40 + legSwing, 12, 6);
+    ctx.fillRect(2, 40 - legSwing, 12, 6);
+    
+    ctx.fillStyle = data.hoodie;
+    ctx.fillRect(-13, -18, 26, 32);
+    
+    ctx.fillStyle = data.accent;
+    ctx.fillRect(-13, -5, 26, 4);
+    
+    ctx.fillStyle = data.hoodie;
+    ctx.fillRect(-22, -15, 8, 26 + armSwing);
+    ctx.fillRect(14, -15, 8, 26 - armSwing);
+    
+    ctx.fillStyle = '#fca5a5';
+    ctx.beginPath();
+    ctx.arc(-18, 13 + armSwing, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(18, 13 - armSwing, 4, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.fillStyle = '#1f2937';
+    ctx.beginPath();
+    ctx.arc(0, -30, 12, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.fillStyle = data.hoodie;
+    ctx.beginPath();
+    ctx.arc(0, -34, 12, Math.PI, 0);
+    ctx.fill();
+    ctx.fillRect(-14, -34, 28, 6);
+    
+    ctx.fillStyle = '#111';
+    ctx.fillRect(-8, -36, 16, 4);
+    
+    ctx.fillStyle = data.accent;
+    ctx.beginPath();
+    ctx.arc(-4, -30, 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(4, -30, 2, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.fillStyle = '#9ca3af';
+    ctx.fillRect(16, 5, 6, 12);
+    ctx.fillStyle = data.accent;
+    ctx.beginPath();
+    ctx.arc(19, 20, 3, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 10px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(data.name, 0, -48);
+    
+    ctx.restore();
+}
+
+function drawObstacle(o) {
+    const x = getLaneX(o.lane, o.z);
+    const y = getScreenY(o.z);
+    const scale = getScale(o.z);
+    
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(scale, scale);
+    
+    if (o.type === 'crate') {
+        ctx.fillStyle = '#5d4037';
+        ctx.fillRect(-22, -22, 44, 44);
+        ctx.strokeStyle = '#8d6e63';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(-22, -22, 44, 44);
+        ctx.beginPath();
+        ctx.moveTo(-22, -22);
+        ctx.lineTo(22, 22);
+        ctx.moveTo(22, -22);
+        ctx.lineTo(-22, 22);
+        ctx.stroke();
+        ctx.fillStyle = '#3e2723';
+        ctx.fillRect(-18, -18, 8, 8);
+        ctx.fillRect(10, -18, 8, 8);
+        ctx.fillRect(-18, 10, 8, 8);
+        ctx.fillRect(10, 10, 8, 8);
+    } else if (o.type === 'barrier') {
+        ctx.fillStyle = '#dc2626';
+        ctx.fillRect(-28, -18, 56, 36);
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(-28, -6, 56, 12);
+        ctx.fillStyle = '#dc2626';
+        ctx.fillRect(-28, -2, 56, 4);
+        ctx.fillStyle = '#991b1b';
+        ctx.fillRect(-30, -20, 4, 40);
+        ctx.fillRect(26, -20, 4, 40);
+    } else if (o.type === 'traincar') {
+        ctx.fillStyle = '#374151';
+        ctx.fillRect(-40, -50, 80, 100);
+        ctx.fillStyle = '#1f2937';
+        ctx.fillRect(-35, -45, 70, 90);
+        ctx.fillStyle = '#4b5563';
+        ctx.fillRect(-38, -48, 76, 8);
+        ctx.fillRect(-38, 40, 76, 8);
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(-30, -35, 12, 12);
+        ctx.fillRect(18, -35, 12, 12);
+        ctx.fillStyle = '#1f2937';
+        ctx.fillRect(-25, -30, 8, 6);
+        ctx.fillRect(23, -30, 8, 6);
+        ctx.fillStyle = '#dc2626';
+        ctx.fillRect(-5, -50, 10, 15);
+    }
+    
+    ctx.restore();
+}
+
+function drawParticle(p) {
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    
+    if (p.type === 'spark') {
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(0, 0, 3, 0, Math.PI * 2);
+        ctx.fill();
+    } else if (p.type === 'paint') {
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = p.life / 2000;
+        ctx.beginPath();
+        ctx.arc((Math.random()-0.5)*10, (Math.random()-0.5)*10, 6, 0, Math.PI * 2);
+        ctx.fill();
+    } else if (p.type === 'flash') {
+        ctx.fillStyle = '#fff';
+        ctx.globalAlpha = p.life / 300;
+        ctx.fillRect(-canvas.width, -canvas.height, canvas.width*2, canvas.height*2);
+    } else if (p.type === 'shockwave') {
+        ctx.strokeStyle = p.color;
+        ctx.globalAlpha = p.life / 600;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(0, 0, (600 - p.life) / 8, 0, Math.PI * 2);
+        ctx.stroke();
+    } else if (p.type === 'zip') {
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = p.life / 400;
+        ctx.fillRect(-2, -2, 4, 4);
+    }
+    
+    ctx.restore();
+}
+
+function drawSable(x, y, scale, frame) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(scale, scale);
+    
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.beginPath();
+    ctx.ellipse(0, 45, 30, 10, 0, 0, Math.PI * 2);
+    ctx.fill();
+    
+    const legOffset = Math.sin(frame) * 14;
+    
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(-18, -20, 36, 45);
+    
+    ctx.fillStyle = '#2d2d2d';
+    ctx.beginPath();
+    ctx.arc(0, -38, 16, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.fillStyle = '#1a1a1a';
+    ctx.beginPath();
+    ctx.moveTo(-14, -48);
+    ctx.lineTo(-22, -72);
+    ctx.lineTo(-6, -54);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(14, -48);
+    ctx.lineTo(22, -72);
+    ctx.lineTo(6, -54);
+    ctx.fill();
+    
+    ctx.fillStyle = '#ff0000';
+    ctx.beginPath();
+    ctx.arc(-7, -40, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(7, -40, 4, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.fillStyle = '#ff4444';
+    ctx.beginPath();
+    ctx.moveTo(-3, -34);
+    ctx.lineTo(0, -30);
+    ctx.lineTo(3, -34);
+    ctx.fill();
+    
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(-14, 25, 11, 22 + legOffset);
+    ctx.fillRect(3, 25, 11, 22 - legOffset);
+    
+    ctx.fillStyle = '#ff0000';
+    ctx.font = 'bold 12px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('SABLE', 0, -82);
+    
+    ctx.restore();
+}
+
+function gameLoop(timestamp) {
+    if (gameState !== STATE.PLAYING && gameState !== STATE.PAUSED) {
+        if (gameState === STATE.MENU || gameState === STATE.GAMEOVER) {
+            draw();
+        }
+        return;
+    }
+    
+    const dt = Math.min(timestamp - lastTime, 50);
+    lastTime = timestamp;
+    
+    if (gameState === STATE.PLAYING) {
+        update(dt);
+    }
+    
+    draw();
+    
+    if (gameState === STATE.PLAYING || gameState === STATE.PAUSED) {
+        requestAnimationFrame(gameLoop);
+    }
+}
+
+draw();
