@@ -259,6 +259,27 @@
             font-weight: bold;
         }
 
+        /* Catch Popup */
+        #catchPopup {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9);
+            border: 3px solid #4ade80;
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            z-index: 80;
+        }
+
+        #catchPopup h3 {
+            color: #4ade80;
+            font-size: 1.8em;
+            margin-bottom: 10px;
+        }
+
         /* Mobile Controls */
         #mobileControls {
             display: none;
@@ -305,30 +326,37 @@
             }
         }
 
-        /* Runner caught popup */
-        #catchPopup {
+        /* Distance bar */
+        #distanceBar {
             display: none;
             position: absolute;
-            top: 50%;
+            top: 70px;
             left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.9);
-            border: 3px solid #4ade80;
-            border-radius: 15px;
-            padding: 25px;
-            text-align: center;
-            z-index: 80;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 8px;
+            background: rgba(0,0,0,0.6);
+            border-radius: 4px;
+            z-index: 50;
+            border: 1px solid rgba(255,255,255,0.2);
         }
 
-        #catchPopup h3 {
-            color: #4ade80;
-            font-size: 1.8em;
-            margin-bottom: 10px;
+        #distanceFill {
+            height: 100%;
+            width: 30%;
+            background: #e94560;
+            border-radius: 4px;
+            transition: width 0.3s;
         }
 
-        #catchPopup p {
-            color: #ccc;
-            font-size: 1em;
+        #distanceText {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            font-size: 0.8em;
+            white-space: nowrap;
         }
     </style>
 </head>
@@ -353,7 +381,7 @@
             <span class="highlight">Swipe</span> or use <span class="highlight">Arrow Keys / WASD</span><br>
             <span class="highlight">Up/W</span> = Jump | <span class="highlight">Down/S</span> = Slide<br>
             <span class="highlight">Left/Right</span> = Switch Tracks</p>
-            <p>Catch runners before they escape!<br>Avoid obstacles and watch out for <span class="highlight">Sable</span>!</p>
+            <p>Catch runners before they escape!<br>Don't let <span class="highlight">Sable</span> catch you!</p>
             <button class="close-btn" id="closeInfoBtn">GOT IT</button>
         </div>
 
@@ -364,6 +392,12 @@
                 <div id="contractBox">Train Yard</div>
             </div>
             <button id="pauseBtn">II</button>
+        </div>
+
+        <!-- Distance Bar -->
+        <div id="distanceBar">
+            <div id="distanceText">50m to catch</div>
+            <div id="distanceFill"></div>
         </div>
 
         <!-- PAUSE SCREEN -->
