@@ -1,28 +1,498 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Security Chase Demo</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Chase: Tag & Bag - Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            overflow: hidden;
+            background: #0a0a0a;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            height: 100vh;
+            max-height: 600px;
+            background: #1a1a2e;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Start Menu */
+        #startMenu {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        #startMenu h1 {
+            color: #e94560;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 3px 3px 0px #0f3460;
+            letter-spacing: 2px;
+        }
+
+        #startMenu .subtitle {
+            color: #eee;
+            font-size: 1.1em;
+            margin-bottom: 40px;
+            opacity: 0.8;
+        }
+
+        .menu-btn {
+            width: 200px;
+            padding: 15px 30px;
+            margin: 10px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        #playBtn {
+            background: #e94560;
+            color: white;
+        }
+
+        #playBtn:hover {
+            background: #ff6b6b;
+            transform: scale(1.05);
+        }
+
+        #infoBtn {
+            background: #0f3460;
+            color: #eee;
+            border: 2px solid #e94560;
+        }
+
+        #infoBtn:hover {
+            background: #e94560;
+            color: white;
+        }
+
+        #infoText {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.95);
+            color: #eee;
+            padding: 30px;
+            border-radius: 10px;
+            border: 2px solid #e94560;
+            max-width: 80%;
+            text-align: center;
+            z-index: 101;
+        }
+
+        #infoText p {
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        #infoText .close-btn {
+            margin-top: 20px;
+            padding: 10px 30px;
+            background: #e94560;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        /* HUD */
+        #hud {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 15px;
+            display: none;
+            justify-content: space-between;
+            align-items: flex-start;
+            z-index: 50;
+            pointer-events: none;
+        }
+
+        .hud-section {
+            background: rgba(0,0,0,0.6);
+            padding: 10px 15px;
+            border-radius: 8px;
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        #scoreDisplay {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #ffd700;
+        }
+
+        #contractDisplay {
+            font-size: 0.9em;
+            color: #aaa;
+        }
+
+        #pauseBtn {
+            pointer-events: all;
+            cursor: pointer;
+            background: rgba(0,0,0,0.7);
+            border: 2px solid #e94560;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        #pauseBtn:hover {
+            background: #e94560;
+        }
+
+        /* Pause Screen */
+        #pauseScreen {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 90;
+        }
+
+        #pauseScreen h2 {
+            color: #e94560;
+            font-size: 2.5em;
+            margin-bottom: 30px;
+        }
+
+        .pause-btn {
+            width: 180px;
+            padding: 12px;
+            margin: 8px;
+            border: 2px solid #e94560;
+            background: transparent;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: all 0.2s;
+        }
+
+        .pause-btn:hover {
+            background: #e94560;
+        }
+
+        /* Game Over */
+        #gameOver {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 95;
+        }
+
+        #gameOver h2 {
+            color: #e94560;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+
+        #gameOver .stats {
+            color: #eee;
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 1.2em;
+        }
+
+        /* Character Select */
+        #charSelect {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            z-index: 99;
+            overflow-y: auto;
+        }
+
+        #charSelect h2 {
+            color: #e94560;
+            margin-bottom: 10px;
+            font-size: 1.8em;
+        }
+
+        .faction-section {
+            width: 100%;
+            max-width: 600px;
+            margin: 15px 0;
+        }
+
+        .faction-title {
+            color: #ffd700;
+            font-size: 1.3em;
+            margin-bottom: 10px;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .datapunk-title {
+            color: #00d4ff;
+        }
+
+        .char-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .char-card {
+            background: rgba(255,255,255,0.1);
+            border: 2px solid transparent;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .char-card:hover {
+            border-color: #e94560;
+            transform: translateY(-5px);
+            background: rgba(255,255,255,0.15);
+        }
+
+        .char-card.selected {
+            border-color: #ffd700;
+            background: rgba(255,215,0,0.2);
+        }
+
+        .char-icon {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 10px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        .vandal-icon {
+            background: #e94560;
+            color: white;
+        }
+
+        .datapunk-icon {
+            background: #00d4ff;
+            color: #1a1a2e;
+        }
+
+        .char-name {
+            color: white;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .char-diff {
+            font-size: 0.8em;
+            padding: 3px 10px;
+            border-radius: 10px;
+            display: inline-block;
+        }
+
+        .diff-easy { background: #4ade80; color: #1a1a2e; }
+        .diff-med { background: #fbbf24; color: #1a1a2e; }
+        .diff-hard { background: #f87171; color: white; }
+
+        .char-ability {
+            color: #aaa;
+            font-size: 0.75em;
+            margin-top: 8px;
+        }
+
+        #startRunBtn {
+            margin-top: 20px;
+            padding: 15px 50px;
+            background: #e94560;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.3em;
+            font-weight: bold;
+            cursor: pointer;
+            display: none;
+        }
+
+        #startRunBtn:hover {
+            background: #ff6b6b;
+        }
+
+        /* Mobile Controls */
+        #mobileControls {
+            display: none;
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            width: 100%;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 50;
+        }
+
+        .mobile-btn {
+            width: 60px;
+            height: 60px;
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.5);
+            border-radius: 50%;
+            color: white;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+        }
+
+        .mobile-btn:active {
+            background: rgba(233, 69, 96, 0.5);
+        }
+
+        @media (max-width: 600px) {
+            #mobileControls {
+                display: flex;
+            }
+        }
+    </style>
 </head>
 <body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
 
-<div id="menu">
-  <h1>Security Chase: Tag & Bag (DEMO)</h1>
-  <button id="playBtn">PLAY</button>
-  <button id="infoBtn">INFO</button>
+        <!-- Start Menu -->
+        <div id="startMenu">
+            <h1>SECURITY CHASE</h1>
+            <p class="subtitle">Tag & Bag - Web Demo</p>
+            <button class="menu-btn" id="playBtn">PLAY</button>
+            <button class="menu-btn" id="infoBtn">INFO</button>
+        </div>
 
-  <p id="infoText" class="hidden">
-    This is a demo for a future iOS game in development.
-  </p>
-</div>
+        <!-- Info Screen -->
+        <div id="infoText">
+            <p><strong>Security Chase: Tag & Bag</strong></p>
+            <p>This is a demo for a future iOS game currently in development.</p>
+            <p>You play as Norm, an underpaid security guard chasing street artists through the city.</p>
+            <p><strong>Controls:</strong><br>
+            Arrow Keys / WASD - Move, Jump, Slide<br>
+            Space - Jump | Down/S - Slide</p>
+            <p>Catch the runners before they escape!</p>
+            <button class="close-btn" onclick="document.getElementById('infoText').style.display='none'">CLOSE</button>
+        </div>
 
-<div id="ui">
-  <div id="pauseScreen" class="hidden">PAUSED</div>
-</div>
+        <!-- Character Select -->
+        <div id="charSelect">
+            <h2>SELECT TARGET</h2>
+            <p style="color:#aaa;margin-bottom:20px;">Pick a runner to chase</p>
+            
+            <div class="faction-section">
+                <div class="faction-title">The Vandals</div>
+                <div class="char-grid" id="vandalGrid"></div>
+            </div>
+            
+            <div class="faction-section">
+                <div class="faction-title datapunk-title">The Datapunks</div>
+                <div class="char-grid" id="datapunkGrid"></div>
+            </div>
+            
+            <button id="startRunBtn">START CHASE</button>
+        </div>
 
-<canvas id="game"></canvas>
+        <!-- HUD -->
+        <div id="hud">
+            <div class="hud-section">
+                <div id="scoreDisplay">$0</div>
+                <div id="contractDisplay">Contract: Train Yard</div>
+            </div>
+            <button id="pauseBtn">PAUSE</button>
+        </div>
 
-<script src="game.js"></script>
+        <!-- Pause Screen -->
+        <div id="pauseScreen">
+            <h2>PAUSED</h2>
+            <button class="pause-btn" id="resumeBtn">RESUME</button>
+            <button class="pause-btn" id="menuBtn">MAIN MENU</button>
+        </div>
+
+        <!-- Game Over -->
+        <div id="gameOver">
+            <h2 id="endTitle">CAUGHT!</h2>
+            <div class="stats" id="endStats"></div>
+            <button class="pause-btn" id="retryBtn">TRY AGAIN</button>
+            <button class="pause-btn" id="endMenuBtn">MENU</button>
+        </div>
+
+        <!-- Mobile Controls -->
+        <div id="mobileControls">
+            <div class="mobile-btn" id="btnLeft">←</div>
+            <div style="display:flex;gap:10px;">
+                <div class="mobile-btn" id="btnSlide">↓</div>
+                <div class="mobile-btn" id="btnJump">↑</div>
+            </div>
+            <div class="mobile-btn" id="btnRight">→</div>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
 </body>
 </html>
