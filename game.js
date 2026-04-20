@@ -739,4 +739,563 @@ function draw() {
     }
     
     // Center rail glow
-    ctx.strokeStyle = 'rgba(
+    ctx.strokeStyle = 'rgba(113, 128, 150, 0.3)';
+    ctx.lineWidth = 8;
+    ctx.beginPath();
+    ctx.moveTo(VANISHING_X - 5, HORIZON_Y);
+    ctx.lineTo(VANISHING_X - 15, canvas.height);
+    ctx.stroke();
+    
+    // Gravel texture
+    ctx.fillStyle = '#3d3425';
+    for (let i = 0; i < 30; i++) {
+        const gz = (i * 0.033 + distance * 0.0005) % 1;
+        const gy = getScreenY(gz);
+        const gx = (i * 97) % canvas.width;
+        ctx.fillRect(gx, gy, 4, 3);
+    }
+    
+    // ==================== DECORATIONS (Background) ====================
+    decorations.forEach(d => {
+        const y = getScreenY(d.z);
+        const s = getScale(d.z);
+        const x = d.side < 0 ? getLaneX(-2, d.z) : getLaneX(2, d.z);
+        
+        ctx.globalAlpha = Math.min(1, d.z * 2);
+        
+        if (d.type === 'lamp') {
+            // Lamp post
+            ctx.fillStyle = '#4a5568';
+            ctx.fillRect(x - 3 * s, y - 120 * s, 6 * s, 120 * s);
+            // Light
+            ctx.fillStyle = '#ffd700';
+            ctx.beginPath();
+            ctx.arc(x, y - 120 * s, 8 * s, 0, Math.PI * 2);
+            ctx.fill();
+            // Glow
+            ctx.fillStyle = 'rgba(255,215,0,0.15)';
+            ctx.beginPath();
+            ctx.arc(x, y - 120 * s, 40 * s, 0, Math.PI * 2);
+            ctx.fill();
+        } else {
+            // Crate stacks
+            ctx.fillStyle = '#5a4a3a';
+            ctx.fillRect(x - 25 * s, y - 40 * s, 50 * s, 40 * s);
+            ctx.fillStyle = '#6b5b4b';
+            ctx.fillRect(x - 20 * s, y - 70 * s, 40 * s, 30 * s);
+        }
+        
+        ctx.globalAlpha = 1;
+    });
+    
+    // ==================== OBSTACLES ====================
+    obstacles.forEach(o => {
+        const y = getScreenY(o.z);
+        const s = getScale(o.z);
+        const x = getLaneX(o.lane, o.z);
+        
+        // Shadow
+        ctx.fillStyle = 'rgba(0,0,0,0.3)';
+        ctx.beginPath();
+        ctx.ellipse(x, y + 5, 30 * s, 8 * s, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        if (o.type === 'crate') {
+            // Wooden crate - must jump over
+            ctx.fillStyle = '#8B4513';
+            const crateH = 50 * s;
+            const crateW = 55 * s;
+            ctx.fillRect(x - crateW / 2, y - crateH, crateW, crateH);
+            
+            // Wood detail
+            ctx.fillStyle = '#A0522D';
+            ctx.fillRect(x - crateW / 2 + 3, y - crateH + 3, crateW - 6, crateH / 3);
+            ctx.fillRect(x - crateW / 2 + 3, y - crateH / 2, crateW - 6, crateH / 3);
+            
+            // Warning symbol
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            ctx.moveTo(x, y - crateH + 8);
+            ctx.lineTo(x + 8, y - crateH + 20);
+            ctx.lineTo(x - 8, y - crateH + 20);
+            ctx.fill();
+            
+        } else if (o.type === 'barrier') {
+            // Barrier - must slide under
+            ctx.fillStyle = '#FF6B35';
+            const barH = 35 * s;
+            const barW = 70 * s;
+            const barY = y - 100 * s; // high up
+            
+            ctx.fillRect(x - barW / 2, barY, barW, barH);
+            
+            // Stripes
+            ctx.fillStyle = '#FFD700';
+            for (let i = 0; i < 4; i++) {
+                ctx.fillRect(x - barW / 2 + i * 18 * s, barY, 8 * s, barH);
+            }
+            
+            // Support poles
+            ctx.fillStyle = '#718096';
+            ctx.fillRect(x - barW / 2 + 5, barY + barH, 6 * s, 100 * s);
+            ctx.fillRect(x + barW / 2 - 15, barY + barH, 6 * s, 100 * s);
+            
+        } else if (o.type === 'traincar') {
+            // Train car blocking lane
+            ctx.fillStyle = '#2d3748';
+            const carW = 90 * s;
+            const carH = 70 * s;
+            ctx.fillRect(x - carW / 2, y - carH, carW, carH);
+            
+            // Windows
+            ctx.fillStyle = '#1a202c';
+            ctx.fillRect(x - carW / 2 + 8, y - carH + 10, carW - 16, 25 * s);
+            
+            // Graffiti
+            ctx.fillStyle = '#e94560';
+            ctx.font = `bold ${12 * s}px sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.save();
+            ctx.translate(x, y - carH / 2);
+            ctx.rotate(-0.1);
+            ctx.fillText('VANDALS', 0, 0);
+            ctx.restore();
+        }
+        
+        // Pixelate effect
+        if (o.pixelated) {
+            ctx.fillStyle = 'rgba(0,255,0,0.2)';
+            ctx.fillRect(x - 40 * s, y - 60 * s, 80 * s, 70 * s);
+        }
+    });
+    
+    // ==================== PARTICLES ====================
+    particles.forEach(p => {
+        const y = p.y || getScreenY(p.z);
+        const s = getScale(p.z);
+        
+        if (p.type === 'paint') {
+            ctx.fillStyle = p.color;
+            ctx.globalAlpha = p.life / 4000;
+            ctx.beginPath();
+            ctx.arc(p.x, y, 35 * s, 0, Math.PI * 2);
+            ctx.fill();
+            
+        } else if (p.type === 'spark') {
+            ctx.fillStyle = '#ffd700';
+            ctx.globalAlpha = p.life / 500;
+            const px = p.x + p.vx * (500 - p.life) / 10;
+            const py = p.y + p.vy * (500 - p.life) / 10;
+            ctx.beginPath();
+            ctx.arc(px, py, 3, 0, Math.PI * 2);
+            ctx.fill();
+            
+        } else if (p.type === 'flash') {
+            ctx.fillStyle = '#ffffff';
+            ctx.globalAlpha = p.life / 400;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fill();
+            
+        } else if (p.type === 'shockwave') {
+            ctx.strokeStyle = '#00d4ff';
+            ctx.lineWidth = 3;
+            ctx.globalAlpha = p.life / 600;
+            ctx.beginPath();
+            ctx.arc(p.x, getScreenY(p.z), p.radius * s, 0, Math.PI * 2);
+            ctx.stroke();
+            
+        } else if (p.type === 'zip') {
+            ctx.fillStyle = '#00d4ff';
+            ctx.globalAlpha = p.life / 400;
+            const zx = p.x + Math.cos(p.angle + Date.now() / 200) * 30 * s;
+            const zy = getScreenY(p.z) + Math.sin(p.angle + Date.now() / 200) * 20 * s;
+            ctx.beginPath();
+            ctx.arc(zx, zy, 5 * s, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    });
+    ctx.globalAlpha = 1;
+    
+    // ==================== RUNNER (Ahead of player) ====================
+    if (!runner.caught && !runner.escaped) {
+        const rZ = runner.z;
+        const rY = getScreenY(rZ);
+        const rX = getLaneX(runner.lane, rZ);
+        const rS = getScale(rZ);
+        
+        // Shadow
+        ctx.fillStyle = 'rgba(0,0,0,0.3)';
+        ctx.beginPath();
+        ctx.ellipse(rX, rY + 5, 20 * rS, 6 * rS, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Runner body
+        const runBounce = Math.sin(runner.animFrame) * 5 * rS;
+        
+        if (runner.data.faction === 'vandal') {
+            // Casual clothes
+            ctx.fillStyle = runner.data.color;
+            ctx.beginPath();
+            ctx.ellipse(rX, rY - 30 * rS + runBounce, 15 * rS, 20 * rS, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Head
+            ctx.fillStyle = '#fca5a5';
+            ctx.beginPath();
+            ctx.arc(rX, rY - 55 * rS + runBounce, 12 * rS, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Hood/hair
+            ctx.fillStyle = runner.data.accent;
+            ctx.beginPath();
+            ctx.arc(rX, rY - 58 * rS + runBounce, 13 * rS, Math.PI, 0);
+            ctx.fill();
+            
+        } else {
+            // Tech suit
+            ctx.fillStyle = runner.data.color;
+            ctx.beginPath();
+            ctx.ellipse(rX, rY - 30 * rS + runBounce, 14 * rS, 19 * rS, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Neon stripe
+            ctx.strokeStyle = runner.data.accent;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(rX - 12 * rS, rY - 40 * rS + runBounce);
+            ctx.lineTo(rX + 12 * rS, rY - 40 * rS + runBounce);
+            ctx.stroke();
+            
+            // Head
+            ctx.fillStyle = '#1e293b';
+            ctx.beginPath();
+            ctx.arc(rX, rY - 53 * rS + runBounce, 11 * rS, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Visor
+            ctx.fillStyle = runner.data.accent;
+            ctx.fillRect(rX - 10 * rS, rY - 56 * rS + runBounce, 20 * rS, 5 * rS);
+        }
+        
+        // Legs running
+        ctx.fillStyle = runner.data.faction === 'vandal' ? '#374151' : '#0f172a';
+        const legSwing = Math.sin(runner.animFrame * 2) * 15 * rS;
+        ctx.fillRect(rX - 8 * rS, rY - 15 * rS + runBounce, 6 * rS, 18 * rS + legSwing);
+        ctx.fillRect(rX + 2 * rS, rY - 15 * rS + runBounce, 6 * rS, 18 * rS - legSwing);
+        
+        // Name tag
+        ctx.fillStyle = '#fff';
+        ctx.font = `bold ${9 * rS}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillText(runner.name, rX, rY - 75 * rS + runBounce);
+        
+        // Distance indicator
+        if (rZ < 0.5) {
+            ctx.fillStyle = 'rgba(255,255,255,0.6)';
+            ctx.font = `${8 * rS}px sans-serif`;
+            ctx.fillText(`${Math.floor((0.85 - rZ) * 100)}m`, rX, rY - 85 * rS + runBounce);
+        }
+    }
+    
+    // ==================== SABLE (Behind player) ====================
+    if (sable.active) {
+        const sZ = sable.z;
+        const sY = getScreenY(sZ);
+        const sX = getLaneX(sable.lane, sZ);
+        const sS = getScale(sZ);
+        
+        // Shadow
+        ctx.fillStyle = 'rgba(0,0,0,0.4)';
+        ctx.beginPath();
+        ctx.ellipse(sX, sY + 5, 35 * sS, 10 * sS, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Body (Doberman)
+        ctx.fillStyle = '#1a1a1a';
+        
+        // Main body - muscular
+        ctx.beginPath();
+        ctx.ellipse(sX, sY - 25 * sS, 30 * sS, 28 * sS, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Chest
+        ctx.beginPath();
+        ctx.ellipse(sX, sY - 40 * sS, 22 * sS, 20 * sS, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Head
+        ctx.beginPath();
+        ctx.ellipse(sX, sY - 65 * sS, 18 * sS, 16 * sS, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Snout
+        ctx.fillStyle = '#2d2d2d';
+        ctx.beginPath();
+        ctx.ellipse(sX, sY - 72 * sS, 12 * sS, 10 * sS, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Pointed ears
+        ctx.fillStyle = '#1a1a1a';
+        const earWiggle = Math.sin(sable.animFrame * 3) * 3;
+        ctx.beginPath();
+        ctx.moveTo(sX - 15 * sS, sY - 75 * sS);
+        ctx.lineTo(sX - 20 * sS + earWiggle, sY - 100 * sS);
+        ctx.lineTo(sX - 5 * sS, sY - 78 * sS);
+        ctx.fill();
+        
+        ctx.beginPath();
+        ctx.moveTo(sX + 15 * sS, sY - 75 * sS);
+        ctx.lineTo(sX + 20 * sS - earWiggle, sY - 100 * sS);
+        ctx.lineTo(sX + 5 * sS, sY - 78 * sS);
+        ctx.fill();
+        
+        // Eyes - GLOWING RED
+        ctx.fillStyle = '#ff0000';
+        ctx.shadowColor = '#ff0000';
+        ctx.shadowBlur = 15;
+        ctx.beginPath();
+        ctx.arc(sX - 7 * sS, sY - 68 * sS, 4 * sS, 0, Math.PI * 2);
+        ctx.arc(sX + 7 * sS, sY - 68 * sS, 4 * sS, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        
+        // Rust markings (Doberman)
+        ctx.fillStyle = '#8B4513';
+        ctx.globalAlpha = 0.5;
+        // Muzzle
+        ctx.beginPath();
+        ctx.ellipse(sX, sY - 65 * sS, 8 * sS, 6 * sS, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // Eyebrows
+        ctx.beginPath();
+        ctx.ellipse(sX - 8 * sS, sY - 78 * sS, 4 * sS, 2 * sS, 0.5, 0, Math.PI * 2);
+        ctx.ellipse(sX + 8 * sS, sY - 78 * sS, 4 * sS, 2 * sS, -0.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        
+        // Legs (running)
+        ctx.fillStyle = '#1a1a1a';
+        const sLegSwing = Math.sin(sable.animFrame * 2.5) * 20 * sS;
+        ctx.fillRect(sX - 18 * sS, sY - 10 * sS, 12 * sS, 25 * sS + sLegSwing);
+        ctx.fillRect(sX + 6 * sS, sY - 10 * sS, 12 * sS, 25 * sS - sLegSwing);
+        
+        // Paws
+        ctx.fillStyle = '#2d2d2d';
+        ctx.beginPath();
+        ctx.ellipse(sX - 12 * sS, sY + 18 * sS + sLegSwing, 8 * sS, 5 * sS, 0, 0, Math.PI * 2);
+        ctx.ellipse(sX + 12 * sS, sY + 18 * sS - sLegSwing, 8 * sS, 5 * sS, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Tail
+        ctx.fillStyle = '#1a1a1a';
+        const tailWag = Math.sin(sable.animFrame * 4) * 10;
+        ctx.beginPath();
+        ctx.moveTo(sX - 25 * sS, sY - 30 * sS);
+        ctx.quadraticCurveTo(sX - 45 * sS + tailWag, sY - 50 * sS, sX - 35 * sS + tailWag, sY - 70 * sS);
+        ctx.lineTo(sX - 20 * sS, sY - 35 * sS);
+        ctx.fill();
+        
+        // White heart patch on chest
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        const hx = sX, hy = sY - 35 * sS;
+        ctx.moveTo(hx, hy + 3 * sS);
+        ctx.bezierCurveTo(hx - 6 * sS, hy - 3 * sS, hx - 6 * sS, hy - 6 * sS, hx - 3 * sS, hy - 5 * sS);
+        ctx.bezierCurveTo(hx, hy - 4 * sS, hx, hy - 4 * sS, hx + 3 * sS, hy - 5 * sS);
+        ctx.bezierCurveTo(hx + 6 * sS, hy - 6 * sS, hx + 6 * sS, hy - 3 * sS, hx, hy + 3 * sS);
+        ctx.fill();
+        
+        // Drool when chasing
+        if (sable.state === 'chase') {
+            ctx.fillStyle = 'rgba(255,255,255,0.5)';
+            const droolY = sY - 60 * sS + Math.sin(Date.now() / 150) * 3;
+            ctx.beginPath();
+            ctx.arc(sX + 5 * sS, droolY, 3 * sS, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        // Name label
+        ctx.fillStyle = '#ff0000';
+        ctx.font = `bold ${11 * sS}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillText('SABLE', sX, sY - 110 * sS);
+    }
+    
+    // ==================== PLAYER (Norm) ====================
+    const pZ = player.z;
+    const pY = getScreenY(pZ) - player.jumpY;
+    const pX = getLaneX(player.lane, pZ);
+    const pS = getScale(pZ);
+    
+    // Shadow (stays on ground when jumping)
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.beginPath();
+    ctx.ellipse(pX, getScreenY(pZ) + 5, 25 * pS, 8 * pS, 0, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Norm body
+    const normBounce = player.jumping ? 0 : Math.sin(player.animFrame * 2) * 4 * pS;
+    const bodyY = pY - 30 * pS + normBounce;
+    
+    // Tan security shirt
+    ctx.fillStyle = '#d4a574';
+    const shirtH = player.sliding ? 25 * pS : 40 * pS;
+    ctx.beginPath();
+    ctx.ellipse(pX, bodyY, 18 * pS, shirtH / 2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Navy pants
+    ctx.fillStyle = '#1e3a5f';
+    const pantH = player.sliding ? 12 * pS : 22 * pS;
+    const pantY = player.sliding ? bodyY + 15 * pS : bodyY + 18 * pS;
+    ctx.fillRect(pX - 10 * pS, pantY, 8 * pS, pantH);
+    ctx.fillRect(pX + 2 * pS, pantY, 8 * pS, pantH);
+    
+    // Head
+    ctx.fillStyle = '#fca5a5';
+    const headY = bodyY - 35 * pS;
+    ctx.beginPath();
+    ctx.arc(pX, headY, 14 * pS, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Hair
+    ctx.fillStyle = '#d4a574';
+    ctx.beginPath();
+    ctx.arc(pX, headY - 5 * pS, 13 * pS, Math.PI, 0);
+    ctx.fill();
+    
+    // Mustache (big bushy)
+    ctx.fillStyle = '#4a3728';
+    ctx.beginPath();
+    ctx.ellipse(pX, headY + 3 * pS, 10 * pS, 4 * pS, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Mustache ends
+    ctx.beginPath();
+    ctx.ellipse(pX - 10 * pS, headY + 2 * pS, 4 * pS, 3 * pS, 0.3, 0, Math.PI * 2);
+    ctx.ellipse(pX + 10 * pS, headY + 2 * pS, 4 * pS, 3 * pS, -0.3, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Eyes (determined)
+    ctx.fillStyle = '#1a1a1a';
+    ctx.beginPath();
+    ctx.arc(pX - 5 * pS, headY - 2 * pS, 2.5 * pS, 0, Math.PI * 2);
+    ctx.arc(pX + 5 * pS, headY - 2 * pS, 2.5 * pS, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Security badge
+    ctx.fillStyle = '#ffd700';
+    ctx.fillRect(pX - 4 * pS, bodyY - 5 * pS, 8 * pS, 10 * pS);
+    ctx.fillStyle = '#000';
+    ctx.font = `bold ${7 * pS}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText('N', pX, bodyY + 1 * pS);
+    
+    // Fanny pack
+    ctx.fillStyle = '#8B4513';
+    ctx.fillRect(pX - 12 * pS, bodyY + 8 * pS, 24 * pS, 10 * pS);
+    
+    // Arms
+    ctx.fillStyle = '#d4a574';
+    if (player.sliding) {
+        // Arms forward when sliding
+        ctx.fillRect(pX - 22 * pS, bodyY + 5 * pS, 18 * pS, 8 * pS);
+        ctx.fillRect(pX + 4 * pS, bodyY + 5 * pS, 18 * pS, 8 * pS);
+    } else {
+        const armSwing = Math.sin(player.animFrame * 2) * 12 * pS;
+        ctx.fillRect(pX - 22 * pS, bodyY - 5 * pS + armSwing, 7 * pS, 20 * pS);
+        ctx.fillRect(pX + 15 * pS, bodyY - 5 * pS - armSwing, 7 * pS, 20 * pS);
+    }
+    
+    // Stun effect
+    if (player.stunTimer > 0) {
+        ctx.fillStyle = 'rgba(255,0,0,0.2)';
+        ctx.beginPath();
+        ctx.arc(pX, headY - 20 * pS, 25 * pS, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.fillStyle = '#ff0000';
+        ctx.font = `bold ${14 * pS}px sans-serif`;
+        ctx.fillText('!', pX, headY - 30 * pS);
+    }
+    
+    // Flash effect (whiteout)
+    if (player.flashTimer > 0) {
+        ctx.fillStyle = `rgba(255,255,255,${player.flashTimer / 1200})`;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+    
+    // Push effect (blue tint)
+    if (player.pushTimer > 0) {
+        ctx.fillStyle = `rgba(0,212,255,${player.pushTimer / 800 * 0.3})`;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+    
+    // Tutorial hints
+    if (runTime < 3000 && !runner.caught) {
+        ctx.fillStyle = 'rgba(0,0,0,0.7)';
+        ctx.roundRect(canvas.width / 2 - 140, 20, 280, 50, 10);
+        ctx.fill();
+        
+        ctx.fillStyle = '#fff';
+        ctx.font = '13px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('↑ Jump  ↓ Slide  ← → Switch lanes', canvas.width / 2, 40);
+        ctx.fillText('Catch the runner!', canvas.width / 2, 58);
+    }
+    
+    ctx.restore(); // End screen shake
+}
+
+// ==================== GAME LOOP ====================
+function gameLoop(timestamp) {
+    const dt = Math.min(timestamp - lastTime, 50); // Cap dt
+    lastTime = timestamp;
+    
+    if (gameState === STATE.PLAYING) {
+        update(dt);
+        draw();
+        requestAnimationFrame(gameLoop);
+    } else if (gameState === STATE.PAUSED) {
+        draw(); // Keep drawing frozen frame
+    }
+}
+
+// ==================== INIT ====================
+// Draw menu background
+function menuDraw() {
+    if (gameState !== STATE.MENU) return;
+    
+    ctx.fillStyle = '#0a0a1a';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Animated background
+    const time = Date.now() / 1000;
+    
+    // Sky
+    const skyGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    skyGrad.addColorStop(0, '#0a0a2e');
+    skyGrad.addColorStop(1, '#1a1a4e');
+    ctx.fillStyle = skyGrad;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Moving ground lines (decorative)
+    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 10; i++) {
+        const y = canvas.height * 0.5 + i * 40 + (time * 20) % 40;
+        if (y < canvas.height) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(canvas.width, y);
+            ctx.stroke();
+        }
+    }
+    
+    requestAnimationFrame(menuDraw);
+}
+
+// Start
+gameState = STATE.MENU;
+lastTime = performance.now();
+menuDraw();
