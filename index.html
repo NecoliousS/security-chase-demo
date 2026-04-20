@@ -1,24 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Security Chase: Tag & Bag</title>
-    <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-            background: #1a1a2e;
-        }
-        #game {
-            width: 100vw;
-            height: 100vh;
-            display: block;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <title>Security Chase Demo</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <canvas id="game"></canvas>
-    <script src="game.js"></script>
+
+<div id="menu">
+  <h1>Security Chase: Tag & Bag (DEMO)</h1>
+  <button id="playBtn">PLAY</button>
+  <button id="infoBtn">INFO</button>
+
+  <p id="infoText" class="hidden">
+    This is a demo for a future iOS game in development.
+  </p>
+</div>
+
+<div id="ui">
+  <div id="pauseScreen" class="hidden">PAUSED</div>
+</div>
+
+<canvas id="game"></canvas>
+
+<script src="game.js"></script>
 </body>
 </html>
