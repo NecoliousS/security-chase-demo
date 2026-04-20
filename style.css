@@ -1,9 +1,4 @@
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    touch-action: none;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; }
 
 body {
     overflow: hidden;
@@ -22,24 +17,17 @@ body {
     max-width: 500px;
     height: 100vh;
     max-height: 900px;
-    background: #1a1a2e;
+    background: #0d1b2a;
     overflow: hidden;
     box-shadow: 0 0 50px rgba(0,0,0,0.8);
 }
 
-canvas {
-    display: block;
-    width: 100%;
-    height: 100%;
-}
+canvas { display: block; width: 100%; height: 100%; }
 
-/* Start Screen */
 #startScreen {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
     background: linear-gradient(180deg, #0d1b2a 0%, #1b263b 50%, #415a77 100%);
     display: flex;
     flex-direction: column;
@@ -52,7 +40,7 @@ canvas {
     color: #e94560;
     font-size: 2.8em;
     font-weight: 900;
-    text-shadow: 0 0 30px rgba(233, 69, 96, 0.6), 0 4px 0 #8b1538;
+    text-shadow: 0 0 30px rgba(233, 69, 96, 0.6);
     margin-bottom: 5px;
     letter-spacing: 3px;
     transform: skew(-5deg);
@@ -64,7 +52,6 @@ canvas {
     margin-bottom: 60px;
     text-transform: uppercase;
     letter-spacing: 6px;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
 }
 
 .menu-btn {
@@ -86,7 +73,6 @@ canvas {
 .menu-btn:hover, .menu-btn:active {
     background: #e94560;
     transform: scale(1.05);
-    box-shadow: 0 0 20px rgba(233, 69, 96, 0.5);
 }
 
 #playBtn {
@@ -95,14 +81,11 @@ canvas {
     box-shadow: 0 4px 15px rgba(233, 69, 96, 0.4);
 }
 
-/* Info Screen */
 #infoScreen {
     display: none;
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
     background: rgba(13, 27, 42, 0.98);
     flex-direction: column;
     justify-content: center;
@@ -117,7 +100,6 @@ canvas {
     font-size: 2em;
     margin-bottom: 20px;
     text-transform: uppercase;
-    letter-spacing: 2px;
 }
 
 #infoScreen p {
@@ -128,10 +110,7 @@ canvas {
     max-width: 400px;
 }
 
-#infoScreen .highlight {
-    color: #ffd700;
-    font-weight: bold;
-}
+#infoScreen .highlight { color: #ffd700; font-weight: bold; }
 
 .close-btn {
     margin-top: 30px;
@@ -143,19 +122,11 @@ canvas {
     cursor: pointer;
     font-size: 1.1em;
     font-weight: bold;
-    transition: all 0.2s;
 }
 
-.close-btn:hover {
-    background: #ff6b6b;
-    transform: scale(1.05);
-}
-
-/* HUD */
 #hud {
     position: absolute;
-    top: 0;
-    left: 0;
+    top: 0; left: 0;
     width: 100%;
     padding: 15px;
     display: none;
@@ -171,20 +142,10 @@ canvas {
     border-radius: 10px;
     color: white;
     border: 2px solid rgba(255,255,255,0.15);
-    backdrop-filter: blur(5px);
 }
 
-#scoreBox {
-    font-size: 1.4em;
-    font-weight: bold;
-    color: #ffd700;
-}
-
-#contractBox {
-    font-size: 0.85em;
-    color: #aaa;
-    margin-top: 4px;
-}
+#scoreBox { font-size: 1.4em; font-weight: bold; color: #ffd700; }
+#contractBox { font-size: 0.85em; color: #aaa; margin-top: 4px; }
 
 #pauseBtn {
     pointer-events: all;
@@ -196,56 +157,30 @@ canvas {
     border-radius: 8px;
     font-weight: bold;
     font-size: 0.9em;
-    transition: all 0.2s;
 }
 
-#pauseBtn:hover {
-    background: #e94560;
-}
-
-/* Pause Screen */
-#pauseScreen {
+#pauseScreen, #gameOverScreen {
     display: none;
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.9);
+    top: 0; left: 0;
+    width: 100%; height: 100%;
     justify-content: center;
     align-items: center;
     flex-direction: column;
     z-index: 90;
 }
 
+#pauseScreen { background: rgba(0,0,0,0.9); }
+#gameOverScreen { background: rgba(0,0,0,0.95); z-index: 95; }
+
 #pauseScreen h2 {
     color: #e94560;
     font-size: 2.5em;
     margin-bottom: 40px;
     text-shadow: 0 0 20px rgba(233, 69, 96, 0.5);
-    letter-spacing: 3px;
 }
 
-/* Game Over */
-#gameOverScreen {
-    display: none;
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.95);
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    z-index: 95;
-}
-
-#gameOverScreen h2 {
-    font-size: 2.5em;
-    margin-bottom: 20px;
-    letter-spacing: 2px;
-}
+#gameOverScreen h2 { font-size: 2.5em; margin-bottom: 20px; }
 
 .win-color { color: #4ade80; text-shadow: 0 0 20px rgba(74, 222, 128, 0.4); }
 .lose-color { color: #f87171; text-shadow: 0 0 20px rgba(248, 113, 113, 0.4); }
@@ -260,25 +195,13 @@ canvas {
     border: 1px solid rgba(255,255,255,0.1);
 }
 
-.stats-box p {
-    color: #ccc;
-    margin: 10px 0;
-    font-size: 1.1em;
-}
+.stats-box p { color: #ccc; margin: 10px 0; font-size: 1.1em; }
+.stats-box .big-stat { color: #ffd700; font-size: 1.8em; font-weight: bold; margin-top: 15px; }
 
-.stats-box .big-stat {
-    color: #ffd700;
-    font-size: 1.8em;
-    font-weight: bold;
-    margin-top: 15px;
-}
-
-/* Catch Popup */
 #catchPopup {
     display: none;
     position: absolute;
-    top: 50%;
-    left: 50%;
+    top: 50%; left: 50%;
     transform: translate(-50%, -50%);
     background: rgba(10, 30, 10, 0.95);
     border: 3px solid #4ade80;
@@ -289,32 +212,22 @@ canvas {
     box-shadow: 0 0 40px rgba(74, 222, 128, 0.3);
 }
 
-#catchPopup h3 {
-    color: #4ade80;
-    font-size: 2em;
-    margin-bottom: 10px;
-}
+#catchPopup h3 { color: #4ade80; font-size: 2em; margin-bottom: 10px; }
 
-/* Mobile Controls */
 #mobileControls {
     display: none;
     position: absolute;
-    bottom: 20px;
-    left: 0;
+    bottom: 20px; left: 0;
     width: 100%;
     justify-content: space-between;
     padding: 0 20px;
     z-index: 50;
 }
 
-.control-zone {
-    display: flex;
-    gap: 15px;
-}
+.control-zone { display: flex; gap: 15px; }
 
 .mob-btn {
-    width: 70px;
-    height: 70px;
+    width: 70px; height: 70px;
     background: rgba(255,255,255,0.12);
     border: 2px solid rgba(255,255,255,0.25);
     border-radius: 50%;
@@ -325,7 +238,6 @@ canvas {
     justify-content: center;
     user-select: none;
     -webkit-user-select: none;
-    backdrop-filter: blur(4px);
 }
 
 .mob-btn:active {
@@ -335,23 +247,16 @@ canvas {
 }
 
 @media (max-width: 600px) {
-    #mobileControls {
-        display: flex;
-    }
-    .game-title {
-        font-size: 2.2em;
-    }
+    #mobileControls { display: flex; }
+    .game-title { font-size: 2.2em; }
 }
 
-/* Distance bar */
 #distanceBar {
     display: none;
     position: absolute;
-    top: 75px;
-    left: 50%;
+    top: 75px; left: 50%;
     transform: translateX(-50%);
-    width: 220px;
-    height: 10px;
+    width: 220px; height: 10px;
     background: rgba(0,0,0,0.7);
     border-radius: 5px;
     z-index: 50;
@@ -365,13 +270,11 @@ canvas {
     background: linear-gradient(90deg, #e94560, #ff6b6b);
     border-radius: 5px;
     transition: width 0.3s;
-    box-shadow: 0 0 10px rgba(233, 69, 96, 0.5);
 }
 
 #distanceText {
     position: absolute;
-    top: -22px;
-    left: 50%;
+    top: -22px; left: 50%;
     transform: translateX(-50%);
     color: white;
     font-size: 0.85em;
