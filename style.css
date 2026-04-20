@@ -1,0 +1,45 @@
+body {
+  margin: 0;
+  overflow: hidden;
+  background: black;
+  font-family: Arial;
+}
+
+/* MENU */
+#menu {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: #0b0f1a;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+button {
+  padding: 12px 20px;
+  margin: 10px;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.hidden {
+  display: none;
+}
+
+/* GAME CANVAS */
+canvas {
+  display: block;
+}
+
+/* PAUSE */
+#pauseScreen {
+  position: absolute;
+  top: 40%;
+  width: 100%;
+  text-align: center;
+  font-size: 50px;
+  color: white;
+}
